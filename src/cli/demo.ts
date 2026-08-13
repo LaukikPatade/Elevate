@@ -112,7 +112,7 @@ async function main(): Promise<void> {
 
   console.log(`\n▶ Elevate — system="${system.id}" (owned) intent="${intent.name}"`);
   console.log(
-    `  target=${fixture.url}  params=${JSON.stringify(intent.params)}  runs=${options.runs}  planner=${process.env.ANTHROPIC_API_KEY ? "llm" : "heuristic"}`,
+    `  target=${fixture.url}  params=${JSON.stringify(intent.params)}  runs=${options.runs}  planner=${process.env.GROQ_API_KEY ? "groq" : process.env.ANTHROPIC_API_KEY ? "llm" : "heuristic"}`,
   );
 
   try {

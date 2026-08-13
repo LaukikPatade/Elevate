@@ -12,6 +12,7 @@ import { executeSteps } from "./runtime/execute.js";
 import { JsonSkillStore, type SkillStore } from "./skills/store.js";
 import { HeuristicPlanner } from "./compiler/heuristic.js";
 import { LlmPlanner } from "./compiler/llm.js";
+import { GroqPlanner } from "./compiler/groq.js";
 import type { Planner } from "./compiler/planner.js";
 import { intentOf, missingRequiredParams, type SystemDefinition } from "./systems/definition.js";
 import { planConfirmation } from "./policy/confirmation.js";
@@ -20,7 +21,9 @@ import { JsonAuditLog, type AuditLog } from "./audit/log.js";
 import type { CredentialSource } from "./auth/credentials.js";
 
 export function pickPlanner(): Planner {
-  return process.env.ANTHROPIC_API_KEY ? new LlmPlanner() : new HeuristicPlanner();
+  if (process.env.GROQ_API_KEY) return new GroqPlanner();
+  if (process.env.ANTHROPIC_API_KEY) return new LlmPlanner();
+  return new HeuristicPlanner();
 }
 
 export interface RunOptions {

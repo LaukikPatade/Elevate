@@ -52,7 +52,7 @@ export interface Skill {
   fingerprint: string;
   params: string[];
   steps: Step[];
-  compiledBy: "heuristic" | "llm";
+  compiledBy: "heuristic" | "llm" | "groq";
   createdAt: string;
   stats: SkillStats;
 }

@@ -9,7 +9,7 @@ export interface PlanOutput {
 }
 
 export interface Planner {
-  readonly name: "heuristic" | "llm";
+  readonly name: "heuristic" | "llm" | "groq";
   plan(intent: Intent, system: SystemDefinition, snapshot: PageSnapshot): Promise<PlanOutput>;
   heal(step: Step, page: Page): Promise<Locator | null>;
 }

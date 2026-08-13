@@ -22,12 +22,16 @@ A **system** is described by a `SystemDefinition` (`src/systems/`): its base URL
 its intents — each with declared params and a `mutating` flag. Intents are data, not code, so a new
 system is a new definition, not a new build.
 
-The planner is pluggable (`src/compiler/planner.ts`):
+The planner is pluggable (`src/compiler/planner.ts`) — the seam a new backend drops into
+without touching any caller:
 
 - **HeuristicPlanner** — offline recipes carried on the system definition. Runs with no API key. Reports cold tokens as a *model estimate*.
 - **LlmPlanner** — Claude-backed, compiles systems that have no recipe. Reports *measured* tokens.
+- **GroqPlanner** — same, on Groq's free Llama models (OpenAI-compatible, no SDK). Weaker models emit rougher tool output, so the shared schema is permissive and a `normalizeSteps` pass repairs it (drops bogus navigates, coerces bad strategies, downgrades an unbacked `valueEquals`).
 
-Set `ANTHROPIC_API_KEY` to switch automatically.
+Selection is automatic: `GROQ_API_KEY` → Groq, else `ANTHROPIC_API_KEY` → Claude, else the
+offline heuristic. Both LLM planners share one schema + prompt (`src/compiler/emit.ts`) so they
+can't drift.
 
 ## Trust primitives
 
