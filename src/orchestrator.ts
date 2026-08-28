@@ -32,6 +32,7 @@ export interface RunOptions {
   audit?: AuditLog;
   credentials?: CredentialSource;
   headless?: boolean;
+  slowMo?: number;
   confirm?: boolean;
 }
 
@@ -85,7 +86,7 @@ export async function executeIntent(
     return settle({ path: "cold", status: "failed", ok: false, failure: "intent_impossible" });
   }
 
-  const session = new BrowserSession(options.headless ?? true);
+  const session = new BrowserSession(options.headless ?? true, options.slowMo ?? 0);
   await session.start();
   try {
     await session.page.goto(system.baseUrl, { waitUntil: "domcontentloaded" });

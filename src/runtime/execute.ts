@@ -11,6 +11,7 @@ export interface ExecuteOptions {
 }
 
 const VERIFY_TIMEOUT_MS = 4000;
+const READ_TIMEOUT_MS = 1200;
 
 export function bind(
   value: string | undefined,
@@ -26,10 +27,14 @@ export function bind(
 
 async function readValue(page: Page, locator: Locator): Promise<string> {
   const resolved = resolveOne(page, locator);
-  await resolved.waitFor({ state: "visible", timeout: VERIFY_TIMEOUT_MS }).catch(() => {});
-  const text = await resolved.innerText().catch(() => "");
+  const visible = await resolved
+    .waitFor({ state: "visible", timeout: READ_TIMEOUT_MS })
+    .then(() => true)
+    .catch(() => false);
+  if (!visible) return "";
+  const text = await resolved.innerText({ timeout: READ_TIMEOUT_MS }).catch(() => "");
   if (text) return text;
-  return resolved.inputValue().catch(() => "");
+  return resolved.inputValue({ timeout: READ_TIMEOUT_MS }).catch(() => "");
 }
 
 async function checkVerify(
@@ -69,9 +74,18 @@ async function checkVerify(
       return ok ? `element "${value}" visible` : null;
     }
     case "valueEquals": {
-      if (!verify.target) return null;
-      const actual = await readValue(page, verify.target);
-      return actual.includes(value) ? `value "${value}" present` : null;
+      if (!value) return null;
+      if (verify.target) {
+        const actual = await readValue(page, verify.target);
+        if (actual.includes(value)) return `value "${value}" present`;
+      }
+      const visible = await page
+        .getByText(value, { exact: false })
+        .first()
+        .waitFor({ state: "visible", timeout: VERIFY_TIMEOUT_MS })
+        .then(() => true)
+        .catch(() => false);
+      return visible ? `value "${value}" visible on page` : null;
     }
     default:
       return null;

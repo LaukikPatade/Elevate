@@ -8,10 +8,10 @@ export class BrowserSession {
   private context?: BrowserContext;
   page!: Page;
 
-  constructor(private readonly headless = true) {}
+  constructor(private readonly headless = true, private readonly slowMo = 0) {}
 
   async start(): Promise<void> {
-    this.browser = await chromium.launch({ headless: this.headless });
+    this.browser = await chromium.launch({ headless: this.headless, slowMo: this.slowMo });
     this.context = await this.browser.newContext({
       viewport: { width: 1280, height: 800 },
       userAgent:

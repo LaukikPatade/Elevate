@@ -9,6 +9,7 @@ import type { Intent, RunResult } from "../types.js";
 
 const SKILLS_FILE = new URL("../../skills-db/skills.json", import.meta.url);
 const BAR_WIDTH = 28;
+const HEADED_SLOWMO_MS = 450;
 
 interface DemoOptions {
   intent: string;
@@ -122,6 +123,7 @@ async function main(): Promise<void> {
         store: new JsonSkillStore(),
         credentials,
         headless: !options.headed,
+        slowMo: options.headed ? HEADED_SLOWMO_MS : 0,
         confirm: false,
       });
       console.log(`\n  Confirmation gate (no confirm): status=${gated.status}`);
@@ -135,6 +137,7 @@ async function main(): Promise<void> {
         store: new JsonSkillStore(),
         credentials,
         headless: !options.headed,
+        slowMo: options.headed ? HEADED_SLOWMO_MS : 0,
         confirm: true,
       });
       console.log(

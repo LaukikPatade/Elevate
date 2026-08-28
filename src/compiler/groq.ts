@@ -3,10 +3,6 @@ import { makeTokenUsage, type Intent, type Locator, type PageSnapshot, type Skil
 import type { SystemDefinition } from "../systems/definition.js";
 import type { Planner, PlanOutput } from "./planner.js";
 import {
-  EMIT_SKILL_DESCRIPTION,
-  HEAL_INPUT_SCHEMA,
-  PICK_LOCATOR_DESCRIPTION,
-  SKILL_INPUT_SCHEMA,
   harvestHealNodes,
   healPrompt,
   normalizeLocator,
@@ -15,18 +11,27 @@ import {
 } from "./emit.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "openai/gpt-oss-120b";
 
-interface ToolCallResult {
-  args: Record<string, unknown>;
+const PLAN_JSON_SUFFIX =
+  '\n\nReturn ONLY a json object with keys "params" (array of strings) and "steps" (array), matching the example shape above. No prose, no code fences.';
+const HEAL_JSON_SUFFIX =
+  '\n\nReturn ONLY a json object for one locator, e.g. {"strategy":"testid","value":"create"}. No prose, no code fences.';
+
+interface JsonResult {
+  data: Record<string, unknown>;
   input: number;
   output: number;
 }
 
-async function callTool(
-  prompt: string,
-  tool: { name: string; description: string; parameters: unknown },
-): Promise<ToolCallResult> {
+function parseJsonObject(text: string): Record<string, unknown> {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("groq returned no json object");
+  return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
+}
+
+async function callJson(prompt: string): Promise<JsonResult> {
   const response = await fetch(GROQ_URL, {
     method: "POST",
     headers: {
@@ -37,8 +42,7 @@ async function callTool(
       model: MODEL,
       temperature: 0,
       messages: [{ role: "user", content: prompt }],
-      tools: [{ type: "function", function: tool }],
-      tool_choice: { type: "function", function: { name: tool.name } },
+      response_format: { type: "json_object" },
     }),
   });
 
@@ -47,14 +51,14 @@ async function callTool(
   }
 
   const json = (await response.json()) as {
-    choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }> } }>;
+    choices?: Array<{ message?: { content?: string } }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
-  const raw = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-  if (!raw) throw new Error("groq returned no tool call");
+  const content = json.choices?.[0]?.message?.content;
+  if (!content) throw new Error("groq returned no content");
 
   return {
-    args: JSON.parse(raw) as Record<string, unknown>,
+    data: parseJsonObject(content),
     input: json.usage?.prompt_tokens ?? 0,
     output: json.usage?.completion_tokens ?? 0,
   };
@@ -64,12 +68,8 @@ export class GroqPlanner implements Planner {
   readonly name = "groq" as const;
 
   async plan(intent: Intent, system: SystemDefinition, snapshot: PageSnapshot): Promise<PlanOutput> {
-    const { args, input, output } = await callTool(planPrompt(intent, system, snapshot), {
-      name: "emit_skill",
-      description: EMIT_SKILL_DESCRIPTION,
-      parameters: SKILL_INPUT_SCHEMA,
-    });
-    const emitted = args as { params?: string[]; steps?: unknown };
+    const { data, input, output } = await callJson(planPrompt(intent, system, snapshot) + PLAN_JSON_SUFFIX);
+    const emitted = data as { params?: string[]; steps?: unknown };
 
     const skill: Skill = {
       system: system.id,
@@ -87,14 +87,9 @@ export class GroqPlanner implements Planner {
 
   async heal(step: Step, page: Page): Promise<Locator | null> {
     const nodes = await harvestHealNodes(page);
-    const prompt = healPrompt(step, nodes);
     try {
-      const { args } = await callTool(prompt, {
-        name: "pick_locator",
-        description: PICK_LOCATOR_DESCRIPTION,
-        parameters: HEAL_INPUT_SCHEMA,
-      });
-      return normalizeLocator(args);
+      const { data } = await callJson(healPrompt(step, nodes) + HEAL_JSON_SUFFIX);
+      return normalizeLocator(data);
     } catch {
       return null;
     }
