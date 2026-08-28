@@ -6,93 +6,236 @@
     <title>Acme Internal CRM</title>
     <style>
       :root { font-family: system-ui, sans-serif; color: #1a1a2e; }
+      * { box-sizing: border-box; }
       body { margin: 0; background: #f4f5fb; }
-      header { background: #2b2d6e; color: #fff; padding: 16px 28px; font-weight: 600; }
-      main { max-width: 720px; margin: 32px auto; padding: 0 20px; }
-      .card { background: #fff; border: 1px solid #e2e3ef; border-radius: 10px; padding: 22px; margin-bottom: 22px; }
-      label { display: block; font-size: 13px; color: #555; margin: 12px 0 4px; }
-      input, select { width: 100%; padding: 9px 11px; border: 1px solid #cfd0dd; border-radius: 7px; font-size: 14px; box-sizing: border-box; }
-      button { margin-top: 16px; background: #2b2d6e; color: #fff; border: 0; border-radius: 7px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
-      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      header { background: #2b2d6e; color: #fff; padding: 14px 28px; font-weight: 600; }
+      .layout { display: flex; min-height: calc(100vh - 50px); }
+      nav { width: 180px; background: #23255c; padding: 18px 0; }
+      nav button { display: block; width: 100%; text-align: left; background: none; border: 0; color: #c9caf0; padding: 11px 24px; font-size: 14px; cursor: pointer; }
+      nav button.active, nav button:hover { background: #33357e; color: #fff; }
+      main { flex: 1; padding: 26px 32px; max-width: 900px; }
+      .card { background: #fff; border: 1px solid #e2e3ef; border-radius: 10px; padding: 20px 22px; margin-bottom: 20px; }
+      h1, h2, h3 { margin: 0 0 14px; }
+      label { display: block; font-size: 12px; color: #666; margin: 10px 0 4px; }
+      input, select, textarea { width: 100%; padding: 8px 11px; border: 1px solid #cfd0dd; border-radius: 7px; font-size: 14px; font-family: inherit; }
+      textarea { min-height: 60px; }
+      .row2 { display: flex; gap: 14px; }
+      .row2 > div { flex: 1; }
+      button.primary { margin-top: 16px; background: #2b2d6e; color: #fff; border: 0; border-radius: 7px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+      button.ghost { background: none; border: 1px solid #cfd0dd; border-radius: 7px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+      .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+      .tabs button { background: #ecedf6; border: 0; border-radius: 7px 7px 0 0; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+      .tabs button.active { background: #2b2d6e; color: #fff; }
+      .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+      .toolbar input { max-width: 260px; }
+      table { width: 100%; border-collapse: collapse; }
       th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eef0f7; font-size: 14px; }
-      th { color: #888; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+      th { color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+      .pager { display: flex; gap: 8px; align-items: center; margin-top: 12px; font-size: 13px; color: #777; }
+      .toast { margin-top: 14px; background: #e7f7ec; color: #1c7a3f; border: 1px solid #b6e6c7; border-radius: 7px; padding: 9px 12px; font-size: 13px; }
       .error { color: #c0392b; font-size: 13px; margin-top: 12px; min-height: 16px; }
       .hidden { display: none !important; }
     </style>
   </head>
   <body>
     <header>Acme Internal CRM</header>
-    <main>
-      <section id="login" class="card">
-        <h1>Sign in</h1>
-        <label for="username">Username</label>
-        <input id="username" data-test="username" placeholder="Username" autocomplete="off" />
-        <label for="password">Password</label>
-        <input id="password" data-test="password" type="password" placeholder="Password" autocomplete="off" />
-        <button data-test="signin" id="signin">Sign in</button>
-        <div class="error" id="login-error"></div>
-      </section>
 
-      <section id="app" class="hidden">
-        <div class="card">
-          <h2>New ticket</h2>
-          <label for="subject">Subject</label>
-          <input id="subject" data-test="subject" placeholder="Subject" autocomplete="off" />
-          <label for="priority">Priority</label>
-          <select id="priority" data-test="priority">
-            <option>Low</option>
-            <option selected>Medium</option>
-            <option>High</option>
-          </select>
-          <button data-test="create" id="create">Create ticket</button>
+    <section id="login" class="layout" style="align-items:flex-start">
+      <main>
+        <div class="card" style="max-width:420px">
+          <h1>Sign in</h1>
+          <label for="username">Username</label>
+          <input id="username" data-test="username" placeholder="Username" autocomplete="off" />
+          <label for="password">Password</label>
+          <input id="password" data-test="password" type="password" placeholder="Password" autocomplete="off" />
+          <button class="primary" data-test="signin" id="signin">Sign in</button>
+          <div class="error" id="login-error"></div>
         </div>
-        <div class="card">
-          <h2>Tickets</h2>
-          <table data-test="tickets">
-            <thead><tr><th>Subject</th><th>Priority</th></tr></thead>
-            <tbody id="tickets"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+      </main>
+    </section>
+
+    <div id="app" class="layout hidden">
+      <nav>
+        <button data-test="nav-tickets" class="active">Tickets</button>
+        <button data-test="nav-reports">Reports</button>
+        <button data-test="nav-admin">Admin</button>
+      </nav>
+
+      <main>
+        <section id="view-list">
+          <div class="card">
+            <h2>New ticket</h2>
+            <label for="subject">Subject</label>
+            <input id="subject" data-test="subject" placeholder="Subject" autocomplete="off" />
+            <div class="row2">
+              <div>
+                <label for="priority">Priority</label>
+                <select id="priority" data-test="priority"><option>Low</option><option selected>Medium</option><option>High</option></select>
+              </div>
+              <div>
+                <label for="assignee">Assignee</label>
+                <select id="assignee" data-test="assignee"><option selected>Unassigned</option><option>Alex Chen</option><option>Sam Ortiz</option><option>Jordan Lee</option></select>
+              </div>
+              <div>
+                <label for="category">Category</label>
+                <select id="category" data-test="category"><option>Billing</option><option selected>Technical</option><option>Account</option><option>Other</option></select>
+              </div>
+            </div>
+            <label for="description">Description</label>
+            <textarea id="description" data-test="description" placeholder="Describe the issue"></textarea>
+            <label for="due">Due date</label>
+            <input id="due" data-test="due" placeholder="YYYY-MM-DD" autocomplete="off" />
+            <button class="primary" data-test="create" id="create">Create ticket</button>
+          </div>
+
+          <div class="card">
+            <h2>Tickets</h2>
+            <div class="tabs">
+              <button data-test="tab-open" class="active" id="tab-open">Open</button>
+              <button data-test="tab-resolved" id="tab-resolved">Resolved</button>
+            </div>
+            <div class="toolbar">
+              <input data-test="search" id="search" placeholder="Search tickets" autocomplete="off" />
+            </div>
+            <table>
+              <thead><tr><th>Subject</th><th>Priority</th><th>Assignee</th><th>Status</th><th></th></tr></thead>
+              <tbody id="tickets" data-test="tickets"></tbody>
+            </table>
+            <div class="pager">
+              <button class="ghost" data-test="prev">Prev</button>
+              <span id="page-label">Page 1 of 1</span>
+              <button class="ghost" data-test="next">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-detail" class="hidden">
+          <div class="card">
+            <button class="ghost" data-test="back" id="back">← Back to list</button>
+            <h2 data-test="detail-subject" id="detail-subject" style="margin-top:14px"></h2>
+            <div class="row2">
+              <div>
+                <label for="status">Status</label>
+                <select id="status" data-test="status"><option>Open</option><option>In Progress</option><option>Resolved</option></select>
+              </div>
+              <div>
+                <label for="detail-assignee">Assignee</label>
+                <select id="detail-assignee" data-test="detail-assignee"><option>Unassigned</option><option>Alex Chen</option><option>Sam Ortiz</option><option>Jordan Lee</option></select>
+              </div>
+            </div>
+            <button class="primary" data-test="save" id="save">Save changes</button>
+            <div class="toast hidden" data-test="toast" id="toast">Changes saved</div>
+          </div>
+        </section>
+
+        <section id="view-reports" class="hidden"><div class="card"><h2>Reports</h2><p>Reporting is not available in this environment.</p></div></section>
+        <section id="view-admin" class="hidden"><div class="card"><h2>Admin</h2><p>Admin settings are not available in this environment.</p></div></section>
+      </main>
+    </div>
 
     <script>
       const VALID = { username: "ops", password: "ops-secret" };
+      let tickets = [
+        { id: 3, subject: "VPN access request", priority: "Medium", assignee: "Unassigned", category: "Technical", status: "Resolved" },
+        { id: 2, subject: "Billing discrepancy on policy 4471", priority: "High", assignee: "Sam Ortiz", category: "Billing", status: "Open" },
+        { id: 1, subject: "Onboard new adjuster account", priority: "Low", assignee: "Alex Chen", category: "Account", status: "Open" },
+      ];
+      let nextId = 4;
+      let activeTab = "open";
+      let openId = null;
 
-      function addTicket(subject, priority) {
-        const row = document.createElement("tr");
-        row.className = "ticket";
-        const s = document.createElement("td");
-        s.className = "subject";
-        s.textContent = subject;
-        const p = document.createElement("td");
-        p.className = "priority";
-        p.textContent = priority;
-        row.append(s, p);
-        const body = document.getElementById("tickets");
-        body.insertBefore(row, body.firstChild);
+      const $ = (sel) => document.querySelector(sel);
+      const val = (t) => $(`[data-test="${t}"]`).value;
+
+      function renderList() {
+        const query = $("#search").value.trim().toLowerCase();
+        const body = $("#tickets");
+        body.innerHTML = "";
+        tickets
+          .filter((t) => (activeTab === "resolved" ? t.status === "Resolved" : t.status !== "Resolved"))
+          .filter((t) => t.subject.toLowerCase().includes(query))
+          .forEach((t) => {
+            const tr = document.createElement("tr");
+            tr.className = "ticket";
+            tr.innerHTML =
+              `<td class="subject">${t.subject}</td>` +
+              `<td class="priority">${t.priority}</td>` +
+              `<td class="assignee">${t.assignee}</td>` +
+              `<td class="status">${t.status}</td>` +
+              `<td></td>`;
+            const cell = tr.lastElementChild;
+            const btn = document.createElement("button");
+            btn.className = "ghost";
+            btn.setAttribute("data-test", "open");
+            btn.textContent = "Open";
+            btn.addEventListener("click", () => openDetail(t.id));
+            cell.appendChild(btn);
+            body.appendChild(tr);
+          });
       }
 
-      addTicket("Onboard new adjuster account", "Low");
+      function showView(id) {
+        for (const v of ["view-list", "view-detail", "view-reports", "view-admin"]) {
+          $("#" + v).classList.toggle("hidden", v !== id);
+        }
+      }
 
-      document.getElementById("signin").addEventListener("click", () => {
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value;
-        if (username === VALID.username && password === VALID.password) {
-          document.getElementById("login").classList.add("hidden");
-          document.getElementById("app").classList.remove("hidden");
+      function openDetail(id) {
+        const t = tickets.find((x) => x.id === id);
+        if (!t) return;
+        openId = id;
+        $("#detail-subject").textContent = t.subject;
+        $("#status").value = t.status;
+        $("#detail-assignee").value = t.assignee;
+        $("#toast").classList.add("hidden");
+        showView("view-detail");
+      }
+
+      $("#signin").addEventListener("click", () => {
+        if (val("username") === VALID.username && $("#password").value === VALID.password) {
+          $("#login").classList.add("hidden");
+          $("#app").classList.remove("hidden");
+          renderList();
         } else {
-          document.getElementById("login-error").textContent = "Invalid credentials.";
+          $("#login-error").textContent = "Invalid credentials.";
         }
       });
 
-      document.getElementById("create").addEventListener("click", () => {
-        const subject = document.getElementById("subject").value.trim();
+      $("#create").addEventListener("click", () => {
+        const subject = val("subject").trim();
         if (!subject) return;
-        const priority = document.getElementById("priority").value;
-        addTicket(subject, priority);
-        document.getElementById("subject").value = "";
+        tickets.unshift({
+          id: nextId++,
+          subject,
+          priority: val("priority"),
+          assignee: val("assignee"),
+          category: val("category"),
+          status: "Open",
+        });
+        $("#subject").value = "";
+        $("#description").value = "";
+        $("#due").value = "";
+        activeTab = "open";
+        $("#tab-open").classList.add("active");
+        $("#tab-resolved").classList.remove("active");
+        renderList();
       });
+
+      $("#save").addEventListener("click", () => {
+        const t = tickets.find((x) => x.id === openId);
+        if (!t) return;
+        t.status = val("status");
+        t.assignee = val("detail-assignee");
+        $("#toast").classList.remove("hidden");
+      });
+
+      $("#back").addEventListener("click", () => { showView("view-list"); renderList(); });
+      $("#search").addEventListener("input", renderList);
+      $("#tab-open").addEventListener("click", () => { activeTab = "open"; $("#tab-open").classList.add("active"); $("#tab-resolved").classList.remove("active"); renderList(); });
+      $("#tab-resolved").addEventListener("click", () => { activeTab = "resolved"; $("#tab-resolved").classList.add("active"); $("#tab-open").classList.remove("active"); renderList(); });
+      $('[data-test="nav-tickets"]').addEventListener("click", () => showView("view-list"));
+      $('[data-test="nav-reports"]').addEventListener("click", () => showView("view-reports"));
+      $('[data-test="nav-admin"]').addEventListener("click", () => showView("view-admin"));
     </script>
   </body>
 </html>

@@ -18,7 +18,7 @@ const plan = (name: string, params: Intent["params"] = {}) =>
 
 test("plan declares the params its intent requires", async () => {
   const { skill } = await plan("create_ticket", { subject: "Fix login" });
-  assert.deepEqual(skill.params, ["subject", "priority"]);
+  assert.deepEqual(skill.params, ["subject", "priority", "assignee", "category", "description", "due"]);
 });
 
 test("plan keys the compiled skill to the perceived fingerprint", async () => {

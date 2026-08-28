@@ -74,15 +74,13 @@ async function harvestInteractiveNodes(page: Page): Promise<SemanticNode[]> {
 }
 
 export function fingerprintOf(nodes: SemanticNode[]): string {
-  const shape = nodes
-    .map(
-      (n) =>
-        `${n.role}:${n.testid ?? ""}:${(n.name || "")
-          .slice(0, NAME_PREFIX_LENGTH)
-          .toLowerCase()}`,
-    )
-    .sort()
-    .join("|");
+  const shapes = nodes.map(
+    (n) =>
+      `${n.role}:${n.testid ?? ""}:${(n.name || "")
+        .slice(0, NAME_PREFIX_LENGTH)
+        .toLowerCase()}`,
+  );
+  const shape = [...new Set(shapes)].sort().join("|");
   return createHash("sha256").update(shape).digest("hex").slice(0, 16);
 }
 

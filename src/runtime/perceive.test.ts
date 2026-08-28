@@ -17,6 +17,17 @@ test("fingerprint changes when structure changes", () => {
   assert.notEqual(fingerprintOf(page), fingerprintOf(restructured));
 });
 
+test("fingerprint ignores how many times an identical shape repeats", () => {
+  const one: SemanticNode[] = [...page, { role: "button", name: "Open", testid: "open" }];
+  const many: SemanticNode[] = [
+    ...page,
+    { role: "button", name: "Open", testid: "open" },
+    { role: "button", name: "Open", testid: "open" },
+    { role: "button", name: "Open", testid: "open" },
+  ];
+  assert.equal(fingerprintOf(one), fingerprintOf(many));
+});
+
 test("fingerprint ignores volatile text beyond the name prefix", () => {
   const volatile: SemanticNode[] = [
     { role: "textbox", name: "Username", testid: "username" },
