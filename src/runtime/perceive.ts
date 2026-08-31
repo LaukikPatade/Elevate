@@ -86,7 +86,14 @@ export function fingerprintOf(nodes: SemanticNode[]): string {
 
 export async function perceive(page: Page): Promise<PageSnapshot> {
   await page.waitForLoadState("domcontentloaded").catch(() => {});
-  const nodes = await harvestInteractiveNodes(page);
+  await page.waitForLoadState("networkidle", { timeout: 6000 }).catch(() => {});
+  let nodes: SemanticNode[];
+  try {
+    nodes = await harvestInteractiveNodes(page);
+  } catch {
+    await page.waitForTimeout(1000);
+    nodes = await harvestInteractiveNodes(page).catch(() => [] as SemanticNode[]);
+  }
   return {
     url: page.url(),
     title: await page.title().catch(() => ""),

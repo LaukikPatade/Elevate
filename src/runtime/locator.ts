@@ -1,7 +1,7 @@
 import type { Locator as PwLocator, Page } from "playwright";
 import type { Locator, RobustTarget } from "../types.js";
 
-const CANDIDATE_TIMEOUT_MS = 2500;
+const CANDIDATE_TIMEOUT_MS = 5000;
 
 export function resolveOne(page: Page, locator: Locator): PwLocator {
   let resolved: PwLocator;
