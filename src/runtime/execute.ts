@@ -1,5 +1,5 @@
 import type { Page } from "playwright";
-import type { Intent, Locator, Step, StepResult } from "../types.js";
+import type { Intent, Locator, Step, StepResult, Verify } from "../types.js";
 import type { CredentialSource } from "../auth/credentials.js";
 import { resolveOne, resolveRobust } from "./locator.js";
 
@@ -39,18 +39,17 @@ async function readValue(page: Page, locator: Locator): Promise<string> {
 
 async function checkVerify(
   page: Page,
-  step: Step,
+  verify: Verify,
   intent: Intent,
   credentials?: CredentialSource,
+  timeout = VERIFY_TIMEOUT_MS,
 ): Promise<string | null> {
-  const verify = step.verify;
-  if (!verify) return null;
   const value = bind(verify.value, intent, credentials);
 
   switch (verify.kind) {
     case "urlIncludes": {
       const ok = await page
-        .waitForURL((url) => url.toString().includes(value), { timeout: VERIFY_TIMEOUT_MS })
+        .waitForURL((url) => url.toString().includes(value), { timeout })
         .then(() => true)
         .catch(() => false);
       return ok ? `url includes "${value}"` : null;
@@ -59,7 +58,7 @@ async function checkVerify(
       const ok = await page
         .getByText(value, { exact: false })
         .first()
-        .waitFor({ state: "visible", timeout: VERIFY_TIMEOUT_MS })
+        .waitFor({ state: "visible", timeout })
         .then(() => true)
         .catch(() => false);
       return ok ? `text "${value}" visible` : null;
@@ -68,7 +67,7 @@ async function checkVerify(
       const ok = await page
         .locator(value || "body")
         .first()
-        .waitFor({ state: "visible", timeout: VERIFY_TIMEOUT_MS })
+        .waitFor({ state: "visible", timeout })
         .then(() => true)
         .catch(() => false);
       return ok ? `element "${value}" visible` : null;
@@ -82,7 +81,7 @@ async function checkVerify(
       const visible = await page
         .getByText(value, { exact: false })
         .first()
-        .waitFor({ state: "visible", timeout: VERIFY_TIMEOUT_MS })
+        .waitFor({ state: "visible", timeout })
         .then(() => true)
         .catch(() => false);
       return visible ? `value "${value}" visible on page` : null;
@@ -90,6 +89,16 @@ async function checkVerify(
     default:
       return null;
   }
+}
+
+export async function verifyHolds(
+  page: Page,
+  verify: Verify,
+  intent: Intent,
+  credentials?: CredentialSource,
+  timeout?: number,
+): Promise<boolean> {
+  return (await checkVerify(page, verify, intent, credentials, timeout)) !== null;
 }
 
 async function applyAction(
@@ -157,7 +166,9 @@ async function runStep(
   const result: StepResult = { step, ok: false, usedFallback: false, selfHealed: false };
   try {
     await applyAction(page, step, intent, result, options);
-    const verified = await checkVerify(page, step, intent, options.credentials);
+    const verified = step.verify
+      ? await checkVerify(page, step.verify, intent, options.credentials)
+      : null;
     if (step.verify && !verified) throw new Error(`verify failed: ${step.verify.kind}`);
     result.observation = result.observation ?? verified ?? "ok";
     result.ok = true;

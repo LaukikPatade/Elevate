@@ -70,6 +70,7 @@ export const internalCrm: SystemDefinition = {
         { name: "due", required: false, description: "Due date, YYYY-MM-DD." },
       ],
       mutating: true,
+      idempotency: { kind: "textVisible", value: "{subject}" },
       build: () => [
         { action: "type", target: target(testid("subject"), placeholder("Subject")), value: "{subject}" },
         { action: "select", target: target(testid("priority")), value: "{priority}" },

@@ -1,4 +1,4 @@
-import type { Step } from "../types.js";
+import type { Step, Verify } from "../types.js";
 
 export interface ParamSpec {
   name: string;
@@ -12,6 +12,7 @@ export interface IntentDefinition {
   params: ParamSpec[];
   mutating: boolean;
   build?: (params: Record<string, string | number>) => Step[];
+  idempotency?: Verify;
 }
 
 export interface AuthSpec {

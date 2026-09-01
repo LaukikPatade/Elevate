@@ -21,10 +21,9 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 ---
 
 ## 🔴 Tier 0 — Safety before any real write
-- [ ] **Idempotency for writes** — replaying a mutating skill creates duplicate records. Add a natural-key dedup (check-before-write) or a caller-supplied idempotency token so a retry produces one record, not N.
-  → `runtime/execute.ts`, `orchestrator.ts`, `types.ts` (extends `policy/confirmation.ts`)
-- [ ] **Dry-run mode** — execute the read-only prefix and report the intended write without committing.
-  → `orchestrator.ts`, `runtime/execute.ts` (RunOptions)
+- [x] **Idempotency for writes** — a mutating intent can declare an `idempotency` existence check (a `Verify`); the orchestrator runs it before the commit and returns `already_done` (no write) if the record is already present. Natural-key dedup against the system of record itself.
+  → `policy/idempotency.ts`, `systems/definition.ts` (`idempotency`), `runtime/execute.ts` (`verifyHolds`), `orchestrator.ts`, `types.ts` (`already_done`)
+- [x] **Dry-run mode** — already provided by the confirmation gate: call a mutating intent without `confirm` → it runs the read-only prefix, returns `confirmation_required` + `pendingConfirmation`, and writes nothing. (No separate flag needed.)
 - [ ] **Rollback / compensating actions** — record how to undo reversible intents; hard-gate the irreversible ones.
   → `policy/`, `audit/log.ts`
 - [ ] **Prompt-injection defense** — page text is untrusted input that can hijack the planner. Neutralize instruction-like content in the snapshot; red-team a skill before it goes live.

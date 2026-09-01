@@ -83,7 +83,7 @@ export interface StepResult {
   error?: string;
 }
 
-export type RunStatus = "ok" | "confirmation_required" | "failed";
+export type RunStatus = "ok" | "confirmation_required" | "already_done" | "failed";
 
 export type FailureClass =
   | "system_changed"

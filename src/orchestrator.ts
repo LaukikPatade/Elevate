@@ -8,7 +8,7 @@ import {
 } from "./types.js";
 import { BrowserSession } from "./runtime/browser.js";
 import { perceive } from "./runtime/perceive.js";
-import { executeSteps } from "./runtime/execute.js";
+import { executeSteps, verifyHolds } from "./runtime/execute.js";
 import { JsonSkillStore, type SkillStore } from "./skills/store.js";
 import { HeuristicPlanner } from "./compiler/heuristic.js";
 import { LlmPlanner } from "./compiler/llm.js";
@@ -16,9 +16,12 @@ import { GroqPlanner } from "./compiler/groq.js";
 import type { Planner } from "./compiler/planner.js";
 import { intentOf, missingRequiredParams, type SystemDefinition } from "./systems/definition.js";
 import { planConfirmation } from "./policy/confirmation.js";
+import { idempotencyCheck } from "./policy/idempotency.js";
 import { classifyFailure } from "./policy/failure.js";
 import { JsonAuditLog, type AuditLog } from "./audit/log.js";
 import type { CredentialSource } from "./auth/credentials.js";
+
+const IDEMPOTENCY_TIMEOUT_MS = 1500;
 
 export function pickPlanner(): Planner {
   if (process.env.GROQ_API_KEY) return new GroqPlanner();
@@ -148,6 +151,22 @@ export async function executeIntent(
         tokensEstimated,
         ms: Date.now() - startedAt,
         pendingConfirmation: confirmation.description,
+      });
+    }
+
+    const guard = idempotencyCheck(definition, definition.mutating);
+    if (guard && (await verifyHolds(session.page, guard, intent, options.credentials, IDEMPOTENCY_TIMEOUT_MS))) {
+      return record({
+        intent,
+        system: system.id,
+        path,
+        status: "already_done",
+        ok: true,
+        steps: [],
+        data: {},
+        tokens,
+        tokensEstimated,
+        ms: Date.now() - startedAt,
       });
     }
 
